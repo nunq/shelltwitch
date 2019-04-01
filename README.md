@@ -14,7 +14,7 @@ Simply call this script with "cron".
 
 To check every three minutes, paste this into your crontab:
 ```
-*/3 * * * * " <PATH_TO_SHELLTWITCH.SH> cron"
+*/3 * * * * <ABSOLUTE_PATH_TO_SHELLTWITCH.SH> cron
 ```
 
 ## Other
