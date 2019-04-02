@@ -44,7 +44,7 @@ shouldNotify() {
     for ((i=0; i<${#oStreamers[@]}; i++)) ; do
         if ! [ $(grep -o "${oStreamers[$i]}" < "$cachedir"/live ) ]; then
             getIcon "${oStreamers[$i]}"
-            notify-send  -a "shelltwitch" -t 3 -i "$cachedir/${oStreamers[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamers[$i]}"
+            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$cachedir/${oStreamers[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamers[$i]}"
             echo "${oStreamers[$i]}" >> "$cachedir"/live
         fi
     done
@@ -61,9 +61,10 @@ prepNotify() {
     update
     readarray cachedLivestreams < "$cachedir"/live
     for ((i=0; i<${#cachedLivestreams[@]}; i++)) ; do
-	if ! [[ ${oStreamers[*]} =~ "$i" ]]; then
-	    sed -i "s/^$i//i" "$cachedir"/live
-	fi
+        if ! [ $(grep -o "${cachedLivestreams[$i]}" <<< "${oStreamers[*]}" ) ]; then
+            cutThis="$(printf "%q" ${cachedLivestreams[$i]})"
+            sed -i "/$cutThis/d" "$cachedir"/live
+        fi
     done
 }
 
@@ -76,9 +77,8 @@ fi
 
 case $1 in
     cron)
-	    prepNotify
+        prepNotify
         shouldNotify ;;
     *)
         main ;;
 esac
-
