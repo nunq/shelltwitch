@@ -1,6 +1,12 @@
 # shelltwitch
 A bash script that checks what streamers are online, what they're playing, etc. using the [New Twitch API](https://dev.twitch.tv/docs/api). Notifications are also supported.
 
+## Adding streamers
+Like this:
+```
+streamers=("streamer1" "streamer2" "streamerN")
+```
+
 ## Client ID
 \> How do I get a Client-ID?
 
@@ -18,6 +24,8 @@ To check every three minutes, paste this into your crontab:
 ```
 
 ## Other
+Dependencies: curl, grep, notify-send (for notifications), a pulseaudio daemon running (for getting environment vars)
+
 Sometimes not all the info shows up, I don't really know why this is happening, but I assume that it's rate-limiting done by the Twitch API.
 
 License: GPL v3
