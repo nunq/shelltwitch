@@ -61,10 +61,10 @@ prepNotify() {
     update
     readarray cachedLivestreams < "$cachedir"/live
     for ((i=0; i<${#cachedLivestreams[@]}; i++)) ; do
-	      if ! [ $(grep -o "${cachedLivestreams[$i]}" <<< "${oStreamers[*]}" ) ]; then
+        if ! [ $(grep -o "${cachedLivestreams[$i]}" <<< "${oStreamers[*]}" ) ]; then
             cutThis="$(printf "%q" ${cachedLivestreams[$i]})"
             sed -i "/$cutThis/d" "$cachedir"/live
-	      fi
+        fi
     done
 }
 
