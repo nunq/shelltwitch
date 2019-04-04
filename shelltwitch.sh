@@ -5,9 +5,6 @@ set -e #exit on error
 clientid="YOUR_CLIENTID_HERE"
 streamers=("streamer1" "streamer2" "streamerN")
 cachedir="$HOME/.cache/shelltwitch"
-#make notify-send work, get environment vars
-export DBUS_SESSION_BUS_ADDRESS="$(tr '\0' '\n' < /proc/$(pidof -s pulseaudio)/environ | grep "DBUS_SESSION_BUS_ADDRESS" | cut -d "=" -f 2-)"
-export DISPLAY="$(cat /proc/$(pidof -s pulseaudio)/environ | grep "^DISPLAY=" | sed 's/DISPLAY=//')"
 
 main() {
     printf "shelltwitch\n--------------------\n"
@@ -76,7 +73,7 @@ prepNotify() {
 
 #check if cachefile and cachedir exist
 if [ ! -d "$cachedir" ]; then
-    touch "$cachedir"
+    mkdir "$cachedir"
 fi
 if [ ! -f "$cachedir"/live ]; then
     touch "$cachedir"/live
@@ -84,6 +81,9 @@ fi
 
 case $1 in
     cron)
+        #make notify-send work, get environment vars
+        export DBUS_SESSION_BUS_ADDRESS="$(tr '\0' '\n' < /proc/$(pidof -s pulseaudio)/environ | grep "DBUS_SESSION_BUS_ADDRESS" | cut -d "=" -f 2-)"
+        export DISPLAY="$(cat /proc/$(pidof -s pulseaudio)/environ | grep "^DISPLAY=" | sed 's/DISPLAY=//')"
         prepNotify
         shouldNotify ;;
     *)
