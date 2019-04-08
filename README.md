@@ -2,10 +2,9 @@
 A bash script that checks what streamers are online, what they're playing, etc. using the [New Twitch API](https://dev.twitch.tv/docs/api). Notifications are also supported.
 
 ## Adding streamers
-Like this:
-```
-streamers=("streamer1" "streamer2" "streamerN")
-```
+Followed streamers are fetched using the Twitch API, so just enter your username after `USER=`
+
+When you follow or unfollow a streamer you need to run `./shelltwitch.sh upcache`, to register the changes into the cache file (located at: `~/.cache/shelltwitch/streamers`).
 
 ## Client ID
 \> How do I get a Client-ID?
@@ -16,7 +15,7 @@ streamers=("streamer1" "streamer2" "streamerN")
 * Paste the Client-ID into this script
 
 ## Notifications
-Simply call this script with "cron".
+Simply call this script with "`cron`".
 
 To check every three minutes, paste this into your crontab:
 ```
