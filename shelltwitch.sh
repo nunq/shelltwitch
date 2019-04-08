@@ -2,9 +2,9 @@
 set -e #exit on error
 
 ## VARIABLES
-clientid="YOUR_CLIENTID_HERE"
+CLIENTID="YOUR_CLIENTID_HERE"
 USER="YOUR_USERNAME_HERE"
-cachedir="$HOME/.cache/shelltwitch"
+CACHEDIR="$HOME/.cache/shelltwitch"
 
 main() {
     printf "shelltwitch\n--------------------\n"
@@ -14,9 +14,9 @@ main() {
 }
 
 update() {
-    mapfile -t streamers < "$cachedir"/streamers
+    mapfile -t streamers < "$CACHEDIR"/streamers
     for streamer in "${streamers[@]}"; do
-        jsonData=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$streamer")
+        jsonData=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$streamer")
         #if the twitch api says the streamer is live, add them to oStreamers[]
         if [[ "$(echo "$jsonData" | grep -Po '"type":.*?[^\\]",')" == '"type":"live",' ]]; then
             oStreamers+=("$streamer")
@@ -25,19 +25,19 @@ update() {
 }
 getMetadata() {
     #get some metadata like the stream title or what game is being played
-    gameid=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i' | sed 's/",$//i')
-    game=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')
-    title=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')
+    gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i' | sed 's/",$//i')
+    game=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')
+    title=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')
 }
 
 updateCachedStreamers() {
     #clear cached streamers
-    echo -n "" > "$cachedir"/streamers
-    USERID=$(curl -s -H "Client-ID: $clientid" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i' | sed 's/",$//i')
-    streamers=($(curl -s -H "Client-ID: $clientid" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i'))
+    echo -n "" > "$CACHEDIR"/streamers
+    USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i' | sed 's/",$//i')
+    streamers=($(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i'))
     #cache followed streamers
     for streamer in "${streamers[@]}"; do
-        echo "$streamer" >> "$cachedir"/streamers
+        echo "$streamer" >> "$CACHEDIR"/streamers
     done
 }
 
@@ -54,39 +54,39 @@ buildui() {
 
 shouldNotify() {
     for ((i=0; i<${#oStreamers[@]}; i++)) ; do
-        if ! [ $(grep -o "${oStreamers[$i]}" < "$cachedir"/live ) ]; then #if streamer is online and notification not already sent, send it
+        if ! [ $(grep -o "${oStreamers[$i]}" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
             getIcon "${oStreamers[$i]}"
-            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$cachedir/${oStreamers[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamers[$i]}"
-            echo "${oStreamers[$i]}" >> "$cachedir"/live #save that a notification was sent to cachefile
+            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$CACHEDIR/${oStreamers[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamers[$i]}"
+            echo "${oStreamers[$i]}" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
         fi
     done
 }
 
 getIcon() {
-    #get icon url from the twitch api and curl that image into cachedir
-    if [ ! -f "$cachedir"/"$1".png ]; then
-        streamerIcon=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i' | sed 's/",$//i')
-        curl -s "$streamerIcon" > "$cachedir"/"$1".png
+    #get icon url from the twitch api and curl that image into $CACHEDIR
+    if [ ! -f "$CACHEDIR"/"$1".png ]; then
+        streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i' | sed 's/",$//i')
+        curl -s "$streamerIcon" > "$CACHEDIR"/"$1".png
     fi
 }
 
 prepNotify() {
     update
-    readarray cachedLivestreams < "$cachedir"/live #read streams that were detected as live last time into cachedLivestreams[]
+    readarray cachedLivestreams < "$CACHEDIR"/live #read streams that were detected as live last time into cachedLivestreams[]
     for ((i=0; i<${#cachedLivestreams[@]}; i++)) ; do
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile on the next check (if run via cron)
         if ! [ $(grep -o "${cachedLivestreams[$i]}" <<< "${oStreamers[*]}" ) ]; then
             cutThis="$(printf "%q" ${cachedLivestreams[$i]})"
-            sed -i "/$cutThis/d" "$cachedir"/live #remove them from the cachefile
+            sed -i "/$cutThis/d" "$CACHEDIR"/live #remove them from the cachefile
         fi
     done
 }
 
 #setup cache
-if [ ! -d "$cachedir" ]; then mkdir -p "$cachedir"; fi
-if [ ! -f "$cachedir"/live ]; then touch "$cachedir"/live; fi
-if [ ! -f "$cachedir"/streamers ]; then touch "$cachedir"/streamers; fi
+if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
+if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
+if [ ! -f "$CACHEDIR"/streamers ]; then touch "$CACHEDIR"/streamers; fi
 
 case $1 in
     cron)
