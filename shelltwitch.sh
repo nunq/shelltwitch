@@ -46,18 +46,18 @@ buildui() {
         printf "no one is streaming :(\n"
         exit 0
     fi
-    for (( i=0; i<${#oStreamers[@]}; i++)) ; do #for each online streamer print info
-        getMetadata "${oStreamers[$i]}"
-        printf "\e[0;32monline\e[0m  %s is playing %s\n%s\n\n" "${oStreamers[$i]}" "$game" "$title"
+    for ostreamer in "${ostreamers[@]}"; do #for each online streamer print info
+        getMetadata "$ostreamer"
+        printf "\e[0;32monline\e[0m  %s is playing %s\n%s\n\n" "$ostreamer" "$game" "$title"
     done
 }
 
 shouldNotify() {
-    for ((i=0; i<${#oStreamers[@]}; i++)) ; do
-        if ! [ $(grep -o "${oStreamers[$i]}" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
-            getIcon "${oStreamers[$i]}"
-            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$CACHEDIR/${oStreamers[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamers[$i]}"
-            echo "${oStreamers[$i]}" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
+    for ostreamer in "${ostreamers[@]}"; do
+        if ! [ $(grep -o "$ostreamer" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
+            getIcon "$ostreamer"
+            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$CACHEDIR/$ostreamer.png" "$ostreamer is live" "https://twitch.tv/$ostreamer"
+            echo "$ostreamer" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
         fi
     done
 }
@@ -73,11 +73,11 @@ getIcon() {
 prepNotify() {
     update
     readarray cachedLivestreams < "$CACHEDIR"/live #read streams that were detected as live last time into cachedLivestreams[]
-    for ((i=0; i<${#cachedLivestreams[@]}; i++)) ; do
+    for cstream in "${cachedLivestreams[@]}"; do
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile on the next check (if run via cron)
-        if ! [ $(grep -o "${cachedLivestreams[$i]}" <<< "${oStreamers[*]}" ) ]; then
-            cutThis="$(printf "%q" ${cachedLivestreams[$i]})"
+        if ! [ $(grep -o "$cstream" <<< "${oStreamers[*]}" ) ]; then
+            cutThis="$(printf "%q" $cstream)"
             sed -i "/$cutThis/d" "$CACHEDIR"/live #remove them from the cachefile
         fi
     done
