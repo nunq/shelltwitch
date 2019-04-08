@@ -34,7 +34,7 @@ updateCachedStreamers() {
     #clear cached streamers
     echo -n "" > "$CACHEDIR"/streamers
     USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i' | sed 's/",$//i')
-    streamers=($(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i'))
+    mapfile -t streamers <<< $(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i')
     #cache followed streamers
     for streamer in "${streamers[@]}"; do
         echo "$streamer" >> "$CACHEDIR"/streamers
@@ -46,7 +46,7 @@ buildui() {
         printf "no one is streaming :(\n"
         exit 0
     fi
-    for ostreamer in "${ostreamers[@]}"; do #for each online streamer print info
+    for ostreamer in "${oStreamers[@]}"; do #for each online streamer print info
         getMetadata "$ostreamer"
         printf "\e[0;32monline\e[0m  %s is playing %s\n%s\n\n" "$ostreamer" "$game" "$title"
     done
@@ -77,7 +77,7 @@ prepNotify() {
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile on the next check (if run via cron)
         if ! [ $(grep -o "$cstream" <<< "${oStreamers[*]}" ) ]; then
-            cutThis="$(printf "%q" $cstream)"
+            cutThis="$(printf "%q" "$cstream")"
             sed -i "/$cutThis/d" "$CACHEDIR"/live #remove them from the cachefile
         fi
     done
