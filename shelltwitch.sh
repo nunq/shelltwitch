@@ -3,7 +3,7 @@ set -e #exit on error
 
 ## VARIABLES
 clientid="YOUR_CLIENTID_HERE"
-streamers=("streamer1" "streamer2" "streamerN")
+USER="YOUR_USERNAME_HERE"
 cachedir="$HOME/.cache/shelltwitch"
 
 main() {
@@ -14,6 +14,7 @@ main() {
 }
 
 update() {
+    mapfile -t streamers < "$cachedir"/streamers
     for streamer in "${streamers[@]}"; do
         jsonData=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$streamer")
         #if the twitch api says the streamer is live, add them to oStreamers[]
@@ -27,6 +28,17 @@ getMetadata() {
     gameid=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i' | sed 's/",$//i')
     game=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')
     title=$(curl -s -H "Client-ID: $clientid" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')
+}
+
+updateCachedStreamers() {
+    #clear cached streamers
+    echo -n "" > "$cachedir"/streamers
+    USERID=$(curl -s -H "Client-ID: $clientid" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i' | sed 's/",$//i')
+    streamers=($(curl -s -H "Client-ID: $clientid" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i'))
+    #cache followed streamers
+    for streamer in "${streamers[@]}"; do
+        echo "$streamer" >> "$cachedir"/streamers
+    done
 }
 
 buildui() {
@@ -71,13 +83,10 @@ prepNotify() {
     done
 }
 
-#check if cachefile and cachedir exist
-if [ ! -d "$cachedir" ]; then
-    mkdir "$cachedir"
-fi
-if [ ! -f "$cachedir"/live ]; then
-    touch "$cachedir"/live
-fi
+#setup cache
+if [ ! -d "$cachedir" ]; then mkdir -p "$cachedir"; fi
+if [ ! -f "$cachedir"/live ]; then touch "$cachedir"/live; fi
+if [ ! -f "$cachedir"/streamers ]; then touch "$cachedir"/streamers; fi
 
 case $1 in
     cron)
@@ -86,6 +95,8 @@ case $1 in
         export DISPLAY="$(cat /proc/$(pidof -s pulseaudio)/environ | grep "^DISPLAY=" | sed 's/DISPLAY=//')"
         prepNotify
         shouldNotify ;;
+    upcache)
+        updateCachedStreamers ;;
     *)
         main ;;
 esac
