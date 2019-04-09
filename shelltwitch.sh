@@ -2,8 +2,8 @@
 set -e #exit on error
 
 ## VARIABLES
-CLIENTID="YOUR_CLIENTID_HERE"
-USER="YOUR_USERNAME_HERE"
+CLIENTID="" #YOUR_CLIENTID
+USER="" #YOUR_USERNAME
 CACHEDIR="$HOME/.cache/shelltwitch"
 
 main() {
@@ -83,7 +83,10 @@ prepNotify() {
     done
 }
 
-#setup cache
+#check cache and vars
+if [[ -z $CLIENTID ]]; then echo "error: no client-id set"&&exit 1; fi
+if [[ -z $USER ]]; then echo "error: no username set"&&exit 1; fi
+if [[ -z $CACHEDIR ]]; then echo "error: no cache directory set"&&exit 1; fi
 if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
 if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
 if [ ! -f "$CACHEDIR"/streamers ]; then touch "$CACHEDIR"/streamers; fi
