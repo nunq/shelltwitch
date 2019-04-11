@@ -77,7 +77,7 @@ prepNotify() {
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile on the next check (if run via cron)
         if ! [ $(grep -o "$cstream" <<< "${oStreamers[*]}" ) ]; then
-            cutThis="$(printf "%q" "$cstream")"
+            cutThis="$(printf "%q" $cstream)"
             sed -i "/$cutThis/d" "$CACHEDIR"/live #remove them from the cachefile
         fi
     done
