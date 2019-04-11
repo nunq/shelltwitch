@@ -53,7 +53,7 @@ buildui() {
 }
 
 shouldNotify() {
-    for ostreamer in "${ostreamers[@]}"; do
+    for ostreamer in "${oStreamers[@]}"; do
         if ! [ $(grep -o "$ostreamer" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
             getIcon "$ostreamer"
             /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$CACHEDIR/$ostreamer.png" "$ostreamer is live" "https://twitch.tv/$ostreamer"
