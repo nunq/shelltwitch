@@ -56,7 +56,7 @@ shouldNotify() {
     for ostreamer in "${oStreamers[@]}"; do
         if ! [ $(grep -o "$ostreamer" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
             getIcon "$ostreamer"
-            /usr/bin/notify-send  -a "shelltwitch" -t 3 -i "$CACHEDIR/$ostreamer.png" "$ostreamer is live" "https://twitch.tv/$ostreamer"
+            /usr/bin/notify-send -a "shelltwitch" -t 4500 -i "$CACHEDIR/$ostreamer.png" "$ostreamer is live" "https://twitch.tv/$ostreamer"
             echo "$ostreamer" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
         fi
     done
