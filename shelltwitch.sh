@@ -48,7 +48,7 @@ buildui() {
     fi
     for ostreamer in "${oStreamers[@]}"; do #for each online streamer print info
         getMetadata "$ostreamer"
-        printf "\e[0;32monline\e[0m  %s is playing %s\n%s\n\n" "$ostreamer" "$game" "$title"
+        printf "\e[0;32monline\e[0m  %s is playing %s\n%s\nlink: https://twitch.tv/%s\n\n" "$ostreamer" "$game" "$title" "$ostreamer"
     done
 }
 
