@@ -22,9 +22,10 @@ To check every three minutes, paste this into your crontab:
 */3 * * * * <ABSOLUTE_PATH_TO_SHELLTWITCH.SH> cron
 ```
 
-## Other
-Dependencies: curl, grep, notify-send (for notifications), a pulseaudio daemon running (for getting environment vars)
+## Rate Limiting
+If a lot of the Streamers you follow are live (>5), we send a lot of requests to the API. Because of that the API does some rate limiting so some data may not show up.
 
-Sometimes not all the info shows up, I don't really know why this is happening, but I assume that it's rate-limiting done by the Twitch API.
+## Other
+Dependencies: curl, GNU grep, GNU sed, notify-send (for notifications)
 
 License: GPL v3
