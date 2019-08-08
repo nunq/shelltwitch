@@ -23,7 +23,7 @@ To check every three minutes, paste this into your crontab:
 ```
 
 ## Rate Limiting
-If a lot of the Streamers you follow are live (>5), we send a lot of requests to the API. Because of that the API does some rate limiting so some data may not show up.
+If a lot of the Streamers you follow are live (>5), we send a lot of requests to the API. Because of that the API does some rate limiting so some data may not show up. To combat this, you can set `$ENABLEDELAY="1"`, this adds a one second delay if more than 5 Streamers are live.
 
 ## Other
 Dependencies: curl, GNU grep, GNU sed, notify-send (for notifications)
