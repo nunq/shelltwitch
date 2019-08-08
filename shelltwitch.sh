@@ -4,6 +4,7 @@ set -e #exit on error
 ## VARIABLES
 CLIENTID="" #YOUR_CLIENTID
 USER="" #YOUR_USERNAME
+ENABLEDELAY="" #add 1s delay if online streamers >5 ?
 CACHEDIR="$HOME/.cache/shelltwitch"
 
 main() {
@@ -25,6 +26,7 @@ update() {
 
 getMetadata() {
     #get some metadata like the stream title or what game is being played
+    if [ "$ENABLEDELAY" == "1" ] && [ "${#oStreamers[@]}" -gt "5" ]; then sleep 1; fi
     gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i;s/",$//i')
     game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
     if [ -z "$game" ]; then title="couldn't get game (rate limiting)"; fi
@@ -88,6 +90,7 @@ prepNotify() {
 #check cache and vars
 if [ -z $CLIENTID ]; then echo "error: no client-id set"&&exit 1; fi
 if [ -z $USER ]; then echo "error: no username set"&&exit 1; fi
+if [ -z $ENABLEDELAY ]; then echo "error: \$ENABLEDELAY not set"&&exit 1; fi
 if [ -z $CACHEDIR ]; then echo "error: no cache directory set"&&exit 1; fi
 if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
 if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
