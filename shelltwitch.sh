@@ -26,8 +26,8 @@ update() {
 getMetadata() {
     #get some metadata like the stream title or what game is being played
     gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i' | sed 's/",$//i')
-    game=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')
-    title=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')
+    game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')")
+    title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')")
 }
 
 updateCachedStreamers() {
