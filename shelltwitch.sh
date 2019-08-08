@@ -4,7 +4,7 @@ set -e #exit on error
 ## VARIABLES
 CLIENTID="" #YOUR_CLIENTID
 USER="" #YOUR_USERNAME
-ENABLEDELAY="" #add 1s delay if online streamers >5 ?
+ENABLEDELAY="" #add 1s delay if online streamers >5 ? 1=yes, 0=no
 CACHEDIR="$HOME/.cache/shelltwitch"
 
 main() {
