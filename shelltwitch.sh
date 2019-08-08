@@ -7,10 +7,9 @@ USER="" #YOUR_USERNAME
 CACHEDIR="$HOME/.cache/shelltwitch"
 
 main() {
-    printf "shelltwitch\n--------------------\n"
-    printf "updating...\r"
+    printf "shelltwitch\n--------------------\nupdating...\r"
     update
-    buildui
+    buildUi
 }
 
 update() {
@@ -18,31 +17,34 @@ update() {
     for streamer in "${streamers[@]}"; do
         jsonData=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$streamer")
         #if the twitch api says the streamer is live, add them to oStreamers[]
-        if [[ "$(echo "$jsonData" | grep -Po '"type":.*?[^\\]",')" == '"type":"live",' ]]; then
+        if [ "$(echo "$jsonData" | grep -Po '"type":.*?[^\\]",')" == '"type":"live",' ]; then
             oStreamers+=("$streamer")
         fi
     done
 }
+
 getMetadata() {
     #get some metadata like the stream title or what game is being played
-    gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i' | sed 's/",$//i')
-    game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i' | sed 's/",$//i')")
-    title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i' | sed 's/",$//i')")
+    gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i;s/",$//i')
+    game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
+    if [ -z "$game" ]; then title="couldn't get game (rate limiting)"; fi
+    title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i;s/",$//i')")
+    if [ -z "$title" ]; then title="couldn't get stream title (rate limiting)"; fi
 }
 
 updateCachedStreamers() {
     #clear cached streamers
     echo -n "" > "$CACHEDIR"/streamers
-    USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i' | sed 's/",$//i')
-    mapfile -t streamers <<< $(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//' | sed 's/",$//i')
+    USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i;s/",$//i')
+    mapfile -t streamers <<< $(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//;s/",$//i')
     #cache followed streamers
     for streamer in "${streamers[@]}"; do
         echo "$streamer" >> "$CACHEDIR"/streamers
     done
 }
 
-buildui() {
-    if [[ -z "${oStreamers[*]}" ]]; then #no streamer is online
+buildUi() {
+    if [ -z "${oStreamers[*]}" ]; then #no streamer is online
         printf "no one is streaming :(\n"
         exit 0
     fi
@@ -65,14 +67,14 @@ shouldNotify() {
 getIcon() {
     #get icon url from the twitch api and curl that image into $CACHEDIR
     if [ ! -f "$CACHEDIR"/"$1".png ]; then
-        streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i' | sed 's/",$//i')
+        streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i;s/",$//i')
         curl -s "$streamerIcon" > "$CACHEDIR"/"$1".png
     fi
 }
 
 prepNotify() {
     update
-    readarray cachedLivestreams < "$CACHEDIR"/live #read streams that were detected as live last time into cachedLivestreams[]
+    mapfile -t cachedLivestreams < "$CACHEDIR"/live #read streams that were detected as live last time into cachedLivestreams[]
     for cstream in "${cachedLivestreams[@]}"; do
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile on the next check (if run via cron)
@@ -84,18 +86,18 @@ prepNotify() {
 }
 
 #check cache and vars
-if [[ -z $CLIENTID ]]; then echo "error: no client-id set"&&exit 1; fi
-if [[ -z $USER ]]; then echo "error: no username set"&&exit 1; fi
-if [[ -z $CACHEDIR ]]; then echo "error: no cache directory set"&&exit 1; fi
+if [ -z $CLIENTID ]; then echo "error: no client-id set"&&exit 1; fi
+if [ -z $USER ]; then echo "error: no username set"&&exit 1; fi
+if [ -z $CACHEDIR ]; then echo "error: no cache directory set"&&exit 1; fi
 if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
 if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
 if [ ! -f "$CACHEDIR"/streamers ]; then touch "$CACHEDIR"/streamers; fi
 
 case $1 in
     cron)
-        #make notify-send work, get environment vars
-        export DBUS_SESSION_BUS_ADDRESS="$(tr '\0' '\n' < /proc/$(pidof -s pulseaudio)/environ | grep "DBUS_SESSION_BUS_ADDRESS" | cut -d "=" -f 2-)"
-        export DISPLAY="$(cat /proc/$(pidof -s pulseaudio)/environ | grep "^DISPLAY=" | sed 's/DISPLAY=//')"
+        #environment vars for notify-send
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"
+        export DISPLAY=":0"
         prepNotify
         shouldNotify ;;
     upcache)
