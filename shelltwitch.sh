@@ -28,13 +28,20 @@ getMetadata() {
     #get some metadata like the stream title or what game is being played
     if [ "$ENABLEDELAY" == "1" ] && [ "${#oStreamers[@]}" -gt "5" ]; then sleep 1; fi
     gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i;s/",$//i')
-    game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
+    if ! [ $(grep -o "$gameid" "$CACHEDIR"/gameids ) ]; then
+        game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
+        if [ -n "$game" ]; then echo "$gameid: \"$game\"" >> "$CACHEDIR"/gameids; fi
+    else
+        game=$(grep -oP "(?<=$gameid: \").*?(?=\"$)" "$CACHEDIR"/gameids)
+    fi
     if [ -z "$game" ]; then title="couldn't get game (rate limiting)"; fi
     title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i;s/",$//i')")
     if [ -z "$title" ]; then title="couldn't get stream title (rate limiting)"; fi
 }
 
 updateCachedStreamers() {
+    #clear cached game ids
+    echo -n "" > "$CACHEDIR"/gameids
     #clear cached streamers
     echo -n "" > "$CACHEDIR"/streamers
     USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i;s/",$//i')
