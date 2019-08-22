@@ -16,7 +16,7 @@ main() {
 update() {
     mapfile -t streamers < "$CACHEDIR"/streamers
     for streamer in "${streamers[@]}"; do
-        jsonData=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$streamer")
+        jsonData=$(curl -s -H "Client-ID: $CLIENTID" "https://api.twitch.tv/helix/streams?user_login=$streamer")
         #if the twitch api says the streamer is live, add them to oStreamers[]
         if [ "$(echo "$jsonData" | grep -Po '"type":.*?[^\\]",')" == '"type":"live",' ]; then
             oStreamers+=("$streamer")
@@ -27,15 +27,15 @@ update() {
 getMetadata() {
     #get some metadata like the stream title or what game is being played
     if [ "$ENABLEDELAY" == "1" ] && [ "${#oStreamers[@]}" -gt "5" ]; then sleep 1; fi
-    gameid=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i;s/",$//i')
+    gameid=$(curl -s -H "Client-ID: $CLIENTID" "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"game_id":.*?[^\\]",' | sed 's/^"game_id":"//i;s/",$//i')
     if ! [ $(grep -o "$gameid" "$CACHEDIR"/gameids ) ]; then
-        game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
+        game=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" "https://api.twitch.tv/helix/games?id=$gameid" | grep -Po '"name":.*?[^\\]",' | sed 's/^"name":"//i;s/",$//i')")
         if [ -n "$game" ]; then echo "$gameid: \"$game\"" >> "$CACHEDIR"/gameids; fi
     else
         game=$(grep -oP "(?<=$gameid: \").*?(?=\"$)" "$CACHEDIR"/gameids)
     fi
     if [ -z "$game" ]; then title="couldn't get game (rate limiting)"; fi
-    title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i;s/",$//i')")
+    title=$(printf "%b" "$(curl -s -H "Client-ID: $CLIENTID" "https://api.twitch.tv/helix/streams?user_login=$1" | grep -Po '"title":.*?[^\\]",' | sed 's/^"title":"//i;s/",$//i')")
     if [ -z "$title" ]; then title="couldn't get stream title (rate limiting)"; fi
 }
 
@@ -44,8 +44,8 @@ updateCachedStreamers() {
     echo -n "" > "$CACHEDIR"/gameids
     #clear cached streamers
     echo -n "" > "$CACHEDIR"/streamers
-    USERID=$(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i;s/",$//i')
-    mapfile -t streamers <<< $(curl -s -H "Client-ID: $CLIENTID" -X GET https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//;s/",$//i')
+    USERID=$(curl -s -H "Client-ID: $CLIENTID" https://api.twitch.tv/helix/users?login="$USER"| grep -Po '"id":.*?[^\\]",' | sed 's/^"id":"//i;s/",$//i')
+    mapfile -t streamers <<< $(curl -s -H "Client-ID: $CLIENTID" https://api.twitch.tv/helix/users/follows?from_id="$USERID" | grep -Po '"to_name":.*?[^\\]",' | sed 's/^"to_name":"//;s/",$//i')
     #cache followed streamers
     for streamer in "${streamers[@]}"; do
         echo "$streamer" >> "$CACHEDIR"/streamers
@@ -65,7 +65,7 @@ buildUi() {
 
 shouldNotify() {
     for ostreamer in "${oStreamers[@]}"; do
-        if ! [ $(grep -o "$ostreamer" < "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
+        if ! [ $(grep -o "$ostreamer" "$CACHEDIR"/live ) ]; then #if streamer is online and notification not already sent, send it
             getIcon "$ostreamer"
             /usr/bin/notify-send -a "shelltwitch" -t 4500 -i "$CACHEDIR/$ostreamer.png" "$ostreamer is live" "https://twitch.tv/$ostreamer"
             echo "$ostreamer" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
@@ -76,7 +76,7 @@ shouldNotify() {
 getIcon() {
     #get icon url from the twitch api and curl that image into $CACHEDIR
     if [ ! -f "$CACHEDIR"/"$1".png ]; then
-        streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" -X GET "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i;s/",$//i')
+        streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i;s/",$//i')
         curl -s "$streamerIcon" > "$CACHEDIR"/"$1".png
     fi
 }
