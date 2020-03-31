@@ -6,13 +6,25 @@ Followed streamers are fetched using the Twitch API, so just enter your username
 
 When you follow or unfollow a streamer you need to run `./shelltwitch.sh upcache`, to register the changes into the cache file (located at: `~/.cache/shelltwitch/streamers`).
 
-## Client ID
-\> How do I get a Client-ID?
+## Authenticating with the API
+> As of April 30, 2020 Twitch requires OAuth tokens in all requests made to API endpoints
+
+\> How do I get a token?
 
 * Go to the [Twitch Developer Site](https://dev.twitch.tv)
 * Create an account by linking your Twitch account
-* Go to your dashboard and create a new application
-* Paste the Client-ID into this script
+* Setup 2FA (cuz everything needs 2FA nowadays...)
+* Go to your dashboard and [create a new application](https://dev.twitch.tv/console/apps/create)
+* Paste the Client ID into this script
+* Click 'New Secret' and paste the Client Secret into this script
+* Run this script with 'oauth' as arg 1 to get an oauth token
+* Put the following into your crontab
+```
+@weekly <ABSOLUTE_PATH_TO_SHELLTWITCH.SH> checktoken
+```
+to periodically check when the token file was last modified and, if necessary, request a new token.
+* Everything _should_ work.
+
 
 ## Notifications
 Simply call this script with "`cron`".
