@@ -1,12 +1,10 @@
 #!/bin/bash
 set -e #exit on error
 
-## VARIABLES
-CLIENTID="" #YOUR_CLIENTID
-CLIENTSECRET="" #YOUR_CLIENTSECRET
-USER="" #YOUR_USERNAME
-ENABLEDELAY="1" #add 1s delay if online streamers >5 ? 1=yes, 0=no
+APIKEYSFILE="./apikeys.sh"
 CACHEDIR="$HOME/.cache/shelltwitch"
+
+source "$APIKEYSFILE"
 
 main() {
     printf "shelltwitch\n--------------------\nupdating...\r"
@@ -126,10 +124,8 @@ EOF
 }
 
 #check cache and vars
-if [ -z $CLIENTID ]; then echo "error: no client secret set"&&exit 1; fi
-if [ -z $CLIENTSECRET ]; then echo "error: no client secret set"&&exit 1; fi
+if [ -z $CLIENTID ]; then echo "error: no client id set"&&exit 1; fi
 if [ -z $USER ]; then echo "error: no username set"&&exit 1; fi
-if [ -z $ENABLEDELAY ]; then echo "error: \$ENABLEDELAY not set"&&exit 1; fi
 if [ -z $CACHEDIR ]; then echo "error: no cache directory set"&&exit 1; fi
 if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
 if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
