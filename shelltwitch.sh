@@ -8,6 +8,7 @@ source "$APIKEYSFILE"
 
 main() {
   printf "shelltwitch\n--------------------\nupdating...\r"
+  validateoauth
   update
   buildUi
 }
@@ -63,11 +64,24 @@ prepNotify() {
   done
 }
 
+validateoauth() {
+  maybeValid=$(curl -s -H "Client-ID: $CLIENTID" -H "Authorization: Bearer $OAUTHTOKEN" "https://id.twitch.tv/oauth2/validate")
+  if [[ "$maybeValid" =~ "401" ]]; then
+    echo "oauth token is invalid or has expired, please acquire a new one."
+    exit 1
+  fi
+}
+
 # acquire oauth token
 getoauthtoken() {
-# TODO implement new oauth user flow
-  curl -s -X POST "https://id.twitch.tv/oauth2/token?client_id=$CLIENTID&client_secret=$CLIENTSECRET&grant_type=client_credentials" | grep -oP '(?<="access_token":").*?(?=",")' > "$CACHEDIR"/token
-  [[ -s "$CACHEDIR"/token ]] && echo "saved oauth token to "$CACHEDIR"/token"
+  echo "please visit:"
+  echo "https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=$CLIENTID&redirect_uri=http://localhost:8090&scope=user%3Aread%3Afollows"
+  echo -e "in your browser and grant authorization\n\n"
+
+  read -p "please paste the url you were redirected to (localhost):" url
+  echo $url | grep -oP '(?<=access_token=).*?(?=&)' > "$CACHEDIR"/token
+
+  [[ -s "$CACHEDIR"/token ]] && echo -e "\nsaved oauth token to "$CACHEDIR"/token"
 }
 
 printhelp() {
@@ -76,10 +90,8 @@ shelltwitch -- a simple cli and notifier for twitch
 
 cli options:
 
-upcache    - update followed streamers and repopulate cachefiles
 cron       - use this for notifications using cron (see README.md).
-oauth      - explicitly acquire new OAuth token. Only needed during setup.
-checktoken - checks the oauth token every month or so (see README.md).
+oauth      - acquire new OAuth token.
 help       - show this message.
 
 everything else: run the script normally.
@@ -104,13 +116,8 @@ case $1 in
     export DISPLAY=":0"
     prepNotify
     shouldNotify ;;
-  upcache)
-    [[ -z "$OAUTHTOKEN" ]] && echo -e "error: no oauth token found\nplease run this script with 'oauth' to get a valid oauth token" && exit 1
-    updateCachedStreamers ;;
   oauth)
     getoauthtoken ;;
-  checktoken)
-    checktoken ;;
   h|help|--help|-help)
     printhelp ;;
   *)
