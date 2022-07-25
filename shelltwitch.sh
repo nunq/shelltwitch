@@ -59,7 +59,7 @@ prepnotify() {
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile
     if ! echo "${oStreamersLogin[*]}" | grep -q "$stream" ; then
-      cutThis="$(printf "%q" $cstream)"
+      cutThis="$(printf "%q" $stream)"
       sed -i "/$cutThis/d" "$CACHEDIR"/live
     fi
   done
