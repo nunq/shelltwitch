@@ -10,7 +10,7 @@ main() {
   printf "shelltwitch\n--------------------\nupdating...\r"
   validateoauth
   update
-  buildUi
+  buildui
 }
 
 update() {
@@ -24,7 +24,7 @@ update() {
   mapfile -t oViewers <<< "$(echo $followedLive | grep -oP '(?<="viewer_count":).*?(?=,)')"
 }
 
-buildUi() {
+buildui() {
   if [ -z "${oStreamers[*]}" ]; then #no streamer is online
     printf "no one is streaming :(\n"
     exit 0
@@ -34,17 +34,17 @@ buildUi() {
   done
 }
 
-shouldNotify() {
+shouldnotify() {
   for (( i=0; i<${#oStreamersLogin[@]}; i++ )); do
     if ! grep -q "${oStreamersLogin[$i]}" "$CACHEDIR"/live; then #if streamer is online and notification not already sent, send it
-      getIcon "${oStreamersLogin[$i]}"
+      geticon "${oStreamersLogin[$i]}"
       /usr/bin/notify-send -a "shelltwitch" -t 4500 -i "$CACHEDIR/${oStreamersLogin[$i]}.png" "${oStreamers[$i]} is live" "https://twitch.tv/${oStreamersLogin[$i]}"
       echo "${oStreamersLogin[$i]}" >> "$CACHEDIR"/live #save that a notification was sent to cachefile
     fi
   done
 }
 
-getIcon() {
+geticon() {
   #get icon url from the twitch api and curl that image into $CACHEDIR
   if [ ! -f "$CACHEDIR"/"$1".png ]; then
     streamerIcon=$(curl -s -H "Client-ID: $CLIENTID" -H "Authorization: Bearer $OAUTHTOKEN" "https://api.twitch.tv/helix/users?login=$1" | grep -Po '"profile_image_url":".*?[^\\]",' | sed 's/^"profile_image_url":"//i;s/",$//i')
@@ -52,15 +52,15 @@ getIcon() {
   fi
 }
 
-prepNotify() {
+prepnotify() {
   update
   mapfile -t areLive < "$CACHEDIR"/live #read streams that were detected as live last time into areLive[]
   for stream in "${areLive[@]}"; do
     #if a streamer is no longer in oStreamers[] but still in the cachefile
-    #aka if they went offline remove them from the cachefile on the next check (if run via cron)
+    #aka if they went offline remove them from the cachefile
     if ! echo "${oStreamersLogin[*]}" | grep -q "$stream" ; then
       cutThis="$(printf "%q" $cstream)"
-      sed -i "/$cutThis/d" "$CACHEDIR"/live #remove them from the cachefile
+      sed -i "/$cutThis/d" "$CACHEDIR"/live
     fi
   done
 }
@@ -73,7 +73,6 @@ validateoauth() {
   fi
 }
 
-# acquire oauth token
 getoauthtoken() {
   echo "please visit:"
   echo "https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=$CLIENTID&redirect_uri=http://localhost:8090&scope=user%3Aread%3Afollows"
@@ -114,8 +113,8 @@ case $1 in
     #environment vars for notify-send
     export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"
     export DISPLAY=":0"
-    prepNotify
-    shouldNotify ;;
+    prepnotify
+    shouldnotify ;;
   oauth)
     getoauthtoken ;;
   h|help|--help|-help)
