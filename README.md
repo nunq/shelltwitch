@@ -9,11 +9,11 @@ Followed streamers are fetched using the Twitch API, so just enter your username
 
 \> How do I get a token?
 
+* Setup 2FA for your Twitch account (is required to register an application)
 * Go to the [Twitch Developer Site](https://dev.twitch.tv)
 * Create an account by linking your Twitch account
-* Setup 2FA (required by Twitch)
 * Go to your dashboard and [create a new application](https://dev.twitch.tv/console/apps/create)
-* Use `http://localhost:8090` works as the OAuth redirect URL
+* Use `http://localhost:8090` as the OAuth redirect URL
 * Paste the Client ID into `apikeys.sh`
 * Run `./<script> oauth` to authorize the application you just created to read your Twitch account data
 
