@@ -17,11 +17,11 @@ update() {
   USERID=$(curl -s -H "Client-ID: $CLIENTID" -H "Authorization: Bearer $OAUTHTOKEN" "https://api.twitch.tv/helix/users?login=$USER" | grep -oP '(?<="id":").*?(?=")')
   followedLive=$(curl -s -H "Client-ID: $CLIENTID" -H "Authorization: Bearer $OAUTHTOKEN" "https://api.twitch.tv/helix/streams/followed?user_id=$USERID")
 
-  mapfile -t oStreamers <<< "$(echo $followedLive | grep -oP '(?<="user_name":").*?(?=")')"
-  mapfile -t oStreamersLogin <<< "$(echo $followedLive | grep -oP '(?<="user_login":").*?(?=")')"
-  mapfile -t oGames <<< "$(echo $followedLive | grep -oP '(?<="game_name":").*?(?=")')"
-  mapfile -t oTitles <<< "$(echo $followedLive | grep -oP '(?<="title":").*?(?=")')"
-  mapfile -t oViewers <<< "$(echo $followedLive | grep -oP '(?<="viewer_count":).*?(?=,)')"
+  mapfile -t oStreamers <<< "$(echo "$followedLive" | grep -oP '(?<="user_name":").*?(?=")')"
+  mapfile -t oStreamersLogin <<< "$(echo "$followedLive" | grep -oP '(?<="user_login":").*?(?=")')"
+  mapfile -t oGames <<< "$(echo "$followedLive" | grep -oP '(?<="game_name":").*?(?=")')"
+  mapfile -t oTitles <<< "$(echo "$followedLive" | grep -oP '(?<="title":").*?(?=")')"
+  mapfile -t oViewers <<< "$(echo "$followedLive" | grep -oP '(?<="viewer_count":).*?(?=,)')"
 }
 
 buildui() {
@@ -59,7 +59,7 @@ prepnotify() {
     #if a streamer is no longer in oStreamers[] but still in the cachefile
     #aka if they went offline remove them from the cachefile
     if ! echo "${oStreamersLogin[*]}" | grep -q "$stream" ; then
-      cutThis="$(printf "%q" $stream)"
+      cutThis="$(printf "%q" "$stream")"
       sed -i "/$cutThis/d" "$CACHEDIR"/live
     fi
   done
@@ -78,10 +78,10 @@ getoauthtoken() {
   echo "https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=$CLIENTID&redirect_uri=http://localhost:8090&scope=user%3Aread%3Afollows"
   echo -e "in your browser and grant authorization\n\n"
 
-  read -p "please paste the url you were redirected to (localhost):" url
-  echo $url | grep -oP '(?<=access_token=).*?(?=&)' > "$CACHEDIR"/token
+  read -rp "please paste the url you were redirected to (localhost):" url
+  echo "$url" | grep -oP '(?<=access_token=).*?(?=&)' > "$CACHEDIR"/token
 
-  [[ -s "$CACHEDIR"/token ]] && echo -e "\nsaved oauth token to "$CACHEDIR"/token"
+  [[ -s "$CACHEDIR"/token ]] && echo -e "\nsaved oauth token to $CACHEDIR/token"
 }
 
 printhelp() {
@@ -100,9 +100,9 @@ exit 0
 }
 
 #check cache and vars
-if [ -z $CLIENTID ]; then echo "error: no client id set"&&exit 1; fi
-if [ -z $USER ]; then echo "error: no username set"&&exit 1; fi
-if [ -z $CACHEDIR ]; then echo "error: no cache directory set"&&exit 1; fi
+if [ -z "$CLIENTID" ]; then echo "error: no client id set"&&exit 1; fi
+if [ -z "$USER" ]; then echo "error: no username set"&&exit 1; fi
+if [ -z "$CACHEDIR" ]; then echo "error: no cache directory set"&&exit 1; fi
 if [ ! -d "$CACHEDIR" ]; then mkdir -p "$CACHEDIR"; fi
 if [ ! -f "$CACHEDIR"/live ]; then touch "$CACHEDIR"/live; fi
 OAUTHTOKEN="$(head -n 1 "$CACHEDIR"/token)" || OAUTHTOKEN=""
