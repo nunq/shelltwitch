@@ -17,6 +17,9 @@ update() {
   followedLive=$(curl -s -H "Client-ID: $CLIENTID" -H "Authorization: Bearer $OAUTHTOKEN" "https://api.twitch.tv/helix/streams/followed?user_id=$USERID")
 
   mapfile -t oStreamers <<< "$(echo $followedLive | grep -oP '(?<="user_name":").*?(?=")')"
+  mapfile -t oGames <<< "$(echo $followedLive | grep -oP '(?<="game_name":").*?(?=")')"
+  mapfile -t oTitles <<< "$(echo $followedLive | grep -oP '(?<="title":").*?(?=")')"
+  mapfile -t oViewers <<< "$(echo $followedLive | grep -oP '(?<="viewer_count":).*?(?=,)')"
 }
 
 buildUi() {
@@ -24,9 +27,8 @@ buildUi() {
     printf "no one is streaming :(\n"
     exit 0
   fi
-  for ostreamer in "${oStreamers[@]}"; do #for each online streamer print info
-    getMetadata "$ostreamer"
-    printf "\e[0;32monline\e[0m  %s is playing %s\n%s\nlink: https://twitch.tv/%s\n\n" "$ostreamer" "$game" "$title" "$ostreamer"
+  for (( i=0; i<${#oStreamers[@]}; i++ )); do
+    printf "\e[0;32monline\e[0m  %s is playing %s with %s viewers\n%s\nlink: https://twitch.tv/%s\n\n" "${oStreamers[$i]}" "${oGames[$i]}" "${oViewers[$i]}" "${oTitles[$i]}" "${oStreamers[$i]}"
   done
 }
 
